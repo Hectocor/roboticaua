@@ -28,6 +28,15 @@ function isImageFile(name) {
   return imageExtensions.some((extension) => lowerName.endsWith(extension));
 }
 
+function sortImagesByNameDesc(images) {
+  return [...images].sort((a, b) =>
+    b.caption.localeCompare(a.caption, "es", {
+      numeric: true,
+      sensitivity: "base",
+    })
+  );
+}
+
 function inferGithubRepo() {
   const host = window.location.hostname;
 
@@ -58,11 +67,22 @@ async function loadFromGithubDirectory(galleryDirectory) {
 
   const files = await response.json();
 
-  return files
+  return sortImagesByNameDesc(files
     .filter((file) => file.type === "file" && isImageFile(file.name))
     .map((file) => ({
       src: file.download_url,
       caption: prettifyFilename(file.name),
+    })));
+}
+
+async function loadFromInlineManifest(galleryDirectory) {
+  const files = window.ROBOTICA_GALLERY_IMAGES || [];
+
+  return files
+    .filter(isImageFile)
+    .map((file) => ({
+      src: `${galleryDirectory}/${file}`,
+      caption: prettifyFilename(file),
     }));
 }
 
@@ -190,6 +210,7 @@ async function loadGallery(gallery) {
   const limit = Number.parseInt(gallery.dataset.galleryLimit || "", 10);
   const loaders = [
     loadFromGithubDirectory,
+    loadFromInlineManifest,
     loadFromManifest,
     loadFromDirectoryIndex,
     loadFromNumberedFallback,

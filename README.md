@@ -9,18 +9,20 @@ Sitio estatico para presentar el Grupo de Interes - Robotica Educativa de Experi
 - `directiva.html`: subpagina para directiva, cargos y contactos.
 - `styles.css`: estilos del sitio.
 - `script.js`: carga dinamica de la galeria.
-- `assets/gallery/`: fotos de actividades.
-- `assets/gallery/manifest.json`: respaldo para listar fotos cuando se use un servidor sin indice de directorio.
+- `gallery/`: fotos de actividades.
+- `gallery-data.js`: respaldo directo para previsualizacion local con `file://`.
+- `gallery/manifest.json`: respaldo para listar fotos cuando se use un servidor sin indice de directorio.
 
 ## Galeria
 
-En GitHub Pages, la galeria intenta leer automaticamente los archivos de `assets/gallery` desde la API publica de GitHub.
+En GitHub Pages, la galeria intenta leer automaticamente los archivos de `gallery` desde la API publica de GitHub.
 
 Para agregar fotos:
 
-1. Sube las imagenes a `assets/gallery/`.
+1. Sube las imagenes a `gallery/`.
 2. Usa extensiones `.jpg`, `.jpeg`, `.png`, `.webp` o `.gif`.
-3. Si quieres que tambien funcione en servidores sin API de GitHub, agrega el nombre del archivo a `assets/gallery/manifest.json`.
+3. Para previsualizar abriendo el HTML localmente, agrega el nombre del archivo a `gallery-data.js`.
+4. Si quieres que tambien funcione en servidores sin API de GitHub, agrega el nombre del archivo a `gallery/manifest.json`.
 
 ## Crear repositorio y publicar en GitHub Pages
 
