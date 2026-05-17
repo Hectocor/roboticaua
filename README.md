@@ -5,6 +5,7 @@ Sitio estatico para presentar el Grupo de Interes - Robotica Educativa de Experi
 ## Estructura
 
 - `index.html`: pagina principal.
+- `galeria.html`: galeria completa de actividades.
 - `directiva.html`: subpagina para directiva, cargos y contactos.
 - `styles.css`: estilos del sitio.
 - `script.js`: carga dinamica de la galeria.

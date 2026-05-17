@@ -385,6 +385,12 @@ h3 {
   gap: 16px;
 }
 
+.gallery-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
 .gallery-status {
   grid-column: 1 / -1;
   margin: 0;

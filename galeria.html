@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Galeria | Grupo de Interes - Robotica Educativa</title>
+    <meta
+      name="description"
+      content="Galeria de actividades del Grupo de Interes Robotica Educativa de Experiencia UA."
+    >
+    <link rel="icon" type="image/jpeg" href="assets/robotica-taller-01.jpeg">
+    <link rel="apple-touch-icon" href="assets/robotica-taller-01.jpeg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html#inicio" aria-label="Ir al inicio">
+        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interes Robotica Educativa">
+        <span>
+          <strong>Robotica Educativa</strong>
+          <small>Grupo de Interes · Experiencia UA</small>
+        </span>
+      </a>
+      <nav aria-label="Navegacion principal">
+        <a href="index.html#proposito">Proposito</a>
+        <a href="index.html#actividades">Actividades</a>
+        <a href="directiva.html">Directiva</a>
+        <a href="galeria.html" aria-current="page">Galeria</a>
+        <a href="index.html#contacto">Contacto</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div>
+          <p class="eyebrow">Registro visual</p>
+          <h1>Galeria de actividades</h1>
+          <p>
+            Fotografias de talleres, encuentros y experiencias de vinculacion desarrolladas por
+            el Grupo de Interes - Robotica Educativa.
+          </p>
+        </div>
+        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interes Robotica Educativa">
+      </section>
+
+      <section class="section gallery-section">
+        <div class="section-heading">
+          <p class="eyebrow">Imagenes</p>
+          <h2>Actividades del grupo</h2>
+        </div>
+        <div
+          class="gallery"
+          id="gallery"
+          data-gallery-dir="assets/gallery"
+          aria-label="Galeria completa de imagenes"
+        >
+          <p class="gallery-status">Cargando imagenes...</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Grupo de Interes - Robotica Educativa · Experiencia UA · Universidad Autonoma de Chile</p>
+    </footer>
+
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+      <button class="lightbox-close" type="button" aria-label="Cerrar galeria">&times;</button>
+      <figure>
+        <img src="" alt="">
+        <figcaption></figcaption>
+      </figure>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

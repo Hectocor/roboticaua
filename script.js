@@ -1,12 +1,15 @@
 const lightbox = document.querySelector("#lightbox");
-const lightboxImage = lightbox.querySelector("img");
-const lightboxCaption = lightbox.querySelector("figcaption");
-const closeButton = lightbox.querySelector(".lightbox-close");
-const gallery = document.querySelector("#gallery");
-const galleryDirectory = gallery?.dataset.galleryDir || "assets/gallery";
+const lightboxImage = lightbox?.querySelector("img");
+const lightboxCaption = lightbox?.querySelector("figcaption");
+const closeButton = lightbox?.querySelector(".lightbox-close");
+const galleries = document.querySelectorAll("[data-gallery-dir]");
 const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
 function closeLightbox() {
+  if (!lightbox || !lightboxImage) {
+    return;
+  }
+
   lightbox.classList.remove("is-open");
   lightbox.setAttribute("aria-hidden", "true");
   lightboxImage.src = "";
@@ -39,7 +42,7 @@ function inferGithubRepo() {
   return { owner, repo };
 }
 
-async function loadFromGithubDirectory() {
+async function loadFromGithubDirectory(galleryDirectory) {
   const repo = inferGithubRepo();
 
   if (!repo) {
@@ -63,7 +66,7 @@ async function loadFromGithubDirectory() {
     }));
 }
 
-async function loadFromManifest() {
+async function loadFromManifest(galleryDirectory) {
   const response = await fetch(`${galleryDirectory}/manifest.json`, { cache: "no-store" });
 
   if (!response.ok) {
@@ -80,7 +83,7 @@ async function loadFromManifest() {
     }));
 }
 
-async function loadFromDirectoryIndex() {
+async function loadFromDirectoryIndex(galleryDirectory) {
   const response = await fetch(`${galleryDirectory}/`);
 
   if (!response.ok) {
@@ -110,7 +113,7 @@ function imageExists(src) {
   });
 }
 
-async function loadFromNumberedFallback() {
+async function loadFromNumberedFallback(galleryDirectory) {
   const candidates = [];
 
   for (let index = 1; index <= 80; index += 1) {
@@ -134,6 +137,10 @@ async function loadFromNumberedFallback() {
 
 function bindGalleryItem(item) {
   item.addEventListener("click", () => {
+    if (!lightbox || !lightboxImage || !lightboxCaption || !closeButton) {
+      return;
+    }
+
     const image = item.dataset.full;
     const caption = item.dataset.caption;
 
@@ -146,7 +153,7 @@ function bindGalleryItem(item) {
   });
 }
 
-function renderGallery(images) {
+function renderGallery(gallery, images) {
   gallery.innerHTML = "";
 
   if (!images.length) {
@@ -178,11 +185,9 @@ function renderGallery(images) {
   });
 }
 
-async function loadGallery() {
-  if (!gallery) {
-    return;
-  }
-
+async function loadGallery(gallery) {
+  const galleryDirectory = gallery.dataset.galleryDir || "assets/gallery";
+  const limit = Number.parseInt(gallery.dataset.galleryLimit || "", 10);
   const loaders = [
     loadFromGithubDirectory,
     loadFromManifest,
@@ -192,10 +197,10 @@ async function loadGallery() {
 
   for (const loader of loaders) {
     try {
-      const images = await loader();
+      const images = await loader(galleryDirectory);
 
       if (images.length) {
-        renderGallery(images);
+        renderGallery(gallery, Number.isFinite(limit) ? images.slice(0, limit) : images);
         return;
       }
     } catch (error) {
@@ -203,21 +208,25 @@ async function loadGallery() {
     }
   }
 
-  renderGallery([]);
+  renderGallery(gallery, []);
 }
 
-closeButton.addEventListener("click", closeLightbox);
+if (closeButton) {
+  closeButton.addEventListener("click", closeLightbox);
+}
 
-lightbox.addEventListener("click", (event) => {
-  if (event.target === lightbox) {
-    closeLightbox();
-  }
-});
+if (lightbox) {
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) {
+      closeLightbox();
+    }
+  });
+}
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
+  if (event.key === "Escape" && lightbox?.classList.contains("is-open")) {
     closeLightbox();
   }
 });
 
-loadGallery();
+galleries.forEach(loadGallery);
