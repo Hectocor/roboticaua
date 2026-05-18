@@ -3,7 +3,14 @@ const lightboxImage = lightbox?.querySelector("img");
 const lightboxCaption = lightbox?.querySelector("figcaption");
 const closeButton = lightbox?.querySelector(".lightbox-close");
 const galleries = document.querySelectorAll("[data-gallery-dir]");
+const accessibilityButtons = document.querySelectorAll("[data-accessibility-action]");
 const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+const accessibilityStorageKey = "roboticaUaAccessibility";
+const defaultAccessibilityState = {
+  fontLevel: 0,
+  contrast: false,
+  invert: false,
+};
 
 function closeLightbox() {
   if (!lightbox || !lightboxImage) {
@@ -35,6 +42,69 @@ function sortImagesByNameDesc(images) {
       sensitivity: "base",
     })
   );
+}
+
+function getAccessibilityState() {
+  try {
+    return {
+      ...defaultAccessibilityState,
+      ...JSON.parse(localStorage.getItem(accessibilityStorageKey)),
+    };
+  } catch (error) {
+    return { ...defaultAccessibilityState };
+  }
+}
+
+function saveAccessibilityState(state) {
+  localStorage.setItem(accessibilityStorageKey, JSON.stringify(state));
+}
+
+function applyAccessibilityState(state) {
+  const root = document.documentElement;
+
+  root.classList.toggle("access-font-large", state.fontLevel === 1);
+  root.classList.toggle("access-font-larger", state.fontLevel === 2);
+  root.classList.toggle("access-contrast", state.contrast);
+  root.classList.toggle("access-invert", state.invert);
+
+  accessibilityButtons.forEach((button) => {
+    const action = button.dataset.accessibilityAction;
+
+    if (action === "contrast") {
+      button.setAttribute("aria-pressed", String(state.contrast));
+    }
+
+    if (action === "invert") {
+      button.setAttribute("aria-pressed", String(state.invert));
+    }
+  });
+}
+
+function updateAccessibility(action) {
+  const state = getAccessibilityState();
+
+  if (action === "font-increase") {
+    state.fontLevel = Math.min(state.fontLevel + 1, 2);
+  }
+
+  if (action === "font-decrease") {
+    state.fontLevel = Math.max(state.fontLevel - 1, 0);
+  }
+
+  if (action === "contrast") {
+    state.contrast = !state.contrast;
+  }
+
+  if (action === "invert") {
+    state.invert = !state.invert;
+  }
+
+  if (action === "reset") {
+    Object.assign(state, defaultAccessibilityState);
+  }
+
+  saveAccessibilityState(state);
+  applyAccessibilityState(state);
 }
 
 function inferGithubRepo() {
@@ -225,7 +295,7 @@ async function loadGallery(gallery) {
         return;
       }
     } catch (error) {
-      console.warn("No se pudo cargar la galeria con este metodo.", error);
+      console.warn("No se pudo cargar la galería con este método.", error);
     }
   }
 
@@ -250,4 +320,11 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+accessibilityButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    updateAccessibility(button.dataset.accessibilityAction);
+  });
+});
+
+applyAccessibilityState(getAccessibilityState());
 galleries.forEach(loadGallery);

@@ -20,6 +20,14 @@ html {
   scroll-behavior: smooth;
 }
 
+html.access-font-large {
+  font-size: 112.5%;
+}
+
+html.access-font-larger {
+  font-size: 125%;
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -37,9 +45,62 @@ a {
   color: inherit;
 }
 
-.site-header {
+.accessibility-bar {
   position: sticky;
   top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px clamp(18px, 4vw, 56px);
+  color: var(--white);
+  background: var(--ink);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.accessibility-bar span {
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.accessibility-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.accessibility-controls button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 6px;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.accessibility-controls button:hover,
+.accessibility-controls button[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--aqua);
+}
+
+.accessibility-controls button:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.site-header {
+  position: sticky;
+  top: 51px;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -532,6 +593,74 @@ footer p {
   margin: 0;
 }
 
+html.access-contrast body {
+  color: #ffffff;
+  background: #000000;
+}
+
+html.access-contrast .accessibility-bar,
+html.access-contrast .site-header,
+html.access-contrast .hero,
+html.access-contrast .page-hero,
+html.access-contrast .identity-strip,
+html.access-contrast .two-column,
+html.access-contrast .audience,
+html.access-contrast .principles,
+html.access-contrast .gallery-section,
+html.access-contrast footer,
+html.access-contrast .audience-panel,
+html.access-contrast .member-card,
+html.access-contrast .gallery-item,
+html.access-contrast .gallery-status,
+html.access-contrast .principles-grid p {
+  color: #ffffff;
+  background: #000000;
+  border-color: #ffffff;
+  box-shadow: none;
+}
+
+html.access-contrast p,
+html.access-contrast .brand small,
+html.access-contrast .content-stack p,
+html.access-contrast .principles-grid p,
+html.access-contrast .audience-panel p,
+html.access-contrast .contact p,
+html.access-contrast .section-heading > p:not(.eyebrow),
+html.access-contrast .member-card dd,
+html.access-contrast footer {
+  color: #ffffff;
+}
+
+html.access-contrast nav a,
+html.access-contrast .member-card a {
+  color: #ffff00;
+}
+
+html.access-contrast .button.primary,
+html.access-contrast .button.secondary,
+html.access-contrast nav a[aria-current="page"] {
+  color: #000000;
+  background: #ffff00;
+  border-color: #ffff00;
+}
+
+html.access-contrast .eyebrow,
+html.access-contrast .activity-grid span {
+  color: #ffff00;
+}
+
+html.access-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html.access-invert img,
+html.access-invert video,
+html.access-invert iframe,
+html.access-invert .member-photo,
+html.access-invert .hero-visual {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
@@ -582,7 +711,13 @@ footer p {
 }
 
 @media (max-width: 980px) {
+  .accessibility-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .site-header {
+    top: 95px;
     align-items: flex-start;
     flex-direction: column;
   }
@@ -623,6 +758,10 @@ footer p {
 }
 
 @media (max-width: 620px) {
+  .accessibility-bar {
+    position: static;
+  }
+
   .site-header {
     position: static;
   }

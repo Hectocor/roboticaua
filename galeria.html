@@ -3,29 +3,40 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Galeria | Grupo de Interes - Robotica Educativa</title>
+    <title>Galería | Grupo de Interés - Robótica Educativa</title>
     <meta
       name="description"
-      content="Galeria de actividades del Grupo de Interes Robotica Educativa de Experiencia UA."
+      content="Galería de actividades del Grupo de Interés Robótica Educativa de Experiencia UA."
     >
     <link rel="icon" type="image/jpeg" href="assets/robotica-taller-01.jpeg">
     <link rel="apple-touch-icon" href="assets/robotica-taller-01.jpeg">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <section class="accessibility-bar" aria-label="Herramientas de accesibilidad">
+      <span>Accesibilidad</span>
+      <div class="accessibility-controls">
+        <button type="button" data-accessibility-action="font-decrease" aria-label="Disminuir tamaño de letra">A-</button>
+        <button type="button" data-accessibility-action="font-increase" aria-label="Aumentar tamaño de letra">A+</button>
+        <button type="button" data-accessibility-action="contrast" aria-pressed="false">Alto contraste</button>
+        <button type="button" data-accessibility-action="invert" aria-pressed="false">Invertir colores</button>
+        <button type="button" data-accessibility-action="reset">Restablecer</button>
+      </div>
+    </section>
+
     <header class="site-header">
       <a class="brand" href="index.html#inicio" aria-label="Ir al inicio">
-        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interes Robotica Educativa">
+        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interés Robótica Educativa">
         <span>
-          <strong>Robotica Educativa</strong>
-          <small>Grupo de Interes · Experiencia UA</small>
+          <strong>Robótica Educativa</strong>
+          <small>Grupo de Interés · Experiencia UA</small>
         </span>
       </a>
-      <nav aria-label="Navegacion principal">
-        <a href="index.html#proposito">Proposito</a>
+      <nav aria-label="Navegación principal">
+        <a href="index.html#proposito">Propósito</a>
         <a href="index.html#actividades">Actividades</a>
         <a href="directiva.html">Directiva</a>
-        <a href="galeria.html" aria-current="page">Galeria</a>
+        <a href="galeria.html" aria-current="page">Galería</a>
         <a href="index.html#contacto">Contacto</a>
       </nav>
     </header>
@@ -34,37 +45,37 @@
       <section class="page-hero">
         <div>
           <p class="eyebrow">Registro visual</p>
-          <h1>Galeria de actividades</h1>
+          <h1>Galería de actividades</h1>
           <p>
-            Fotografias de talleres, encuentros y experiencias de vinculacion desarrolladas por
-            el Grupo de Interes - Robotica Educativa.
+            Fotografías de talleres, encuentros y experiencias de vinculación desarrolladas por
+            el Grupo de Interés - Robótica Educativa.
           </p>
         </div>
-        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interes Robotica Educativa">
+        <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interés Robótica Educativa">
       </section>
 
       <section class="section gallery-section">
         <div class="section-heading">
-          <p class="eyebrow">Imagenes</p>
+          <p class="eyebrow">Imágenes</p>
           <h2>Actividades del grupo</h2>
         </div>
         <div
           class="gallery"
           id="gallery"
           data-gallery-dir="gallery"
-          aria-label="Galeria completa de imagenes"
+          aria-label="Galería completa de imágenes"
         >
-          <p class="gallery-status">Cargando imagenes...</p>
+          <p class="gallery-status">Cargando imágenes...</p>
         </div>
       </section>
     </main>
 
     <footer>
-      <p>Grupo de Interes - Robotica Educativa · Experiencia UA · Universidad Autonoma de Chile</p>
+      <p>Grupo de Interés - Robótica Educativa · Experiencia UA · Universidad Autónoma de Chile</p>
     </footer>
 
     <div class="lightbox" id="lightbox" aria-hidden="true">
-      <button class="lightbox-close" type="button" aria-label="Cerrar galeria">&times;</button>
+      <button class="lightbox-close" type="button" aria-label="Cerrar galería">&times;</button>
       <figure>
         <img src="" alt="">
         <figcaption></figcaption>
