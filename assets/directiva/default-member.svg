@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">Foto por cargar</title>
+  <desc id="desc">Imagen temporal para integrantes de la directiva.</desc>
+  <rect width="640" height="640" fill="#dff5fa"/>
+  <circle cx="320" cy="250" r="112" fill="#174e67"/>
+  <path d="M142 562c18-114 88-182 178-182s160 68 178 182" fill="#0a3142"/>
+  <circle cx="504" cy="112" r="34" fill="#ee6076"/>
+  <path d="M96 110h260" stroke="#83d0e2" stroke-width="18" stroke-linecap="round"/>
+  <path d="M96 152h176" stroke="#83d0e2" stroke-width="18" stroke-linecap="round"/>
+  <text x="320" y="604" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#174e67">Foto por cargar</text>
+</svg>
