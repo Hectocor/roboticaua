@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/config.php';
+require __DIR__ . '/news-content.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT, [
     'options' => ['min_range' => 1],
@@ -11,7 +12,7 @@ $news = null;
 
 if ($id) {
     $statement = db()->prepare(
-        'SELECT id, title, summary, body, image_path, link_url, link_label, published_at
+        'SELECT id, title, summary, body, body_html, image_path, link_url, link_label, published_at
          FROM news_posts
          WHERE id = :id AND is_active = 1
          LIMIT 1'
@@ -74,7 +75,7 @@ function news_date(?string $value): string
       <nav aria-label="Navegación principal">
         <a href="index.html#proposito">Propósito</a>
         <a href="index.html#actividades">Actividades</a>
-        <a href="index.html#noticias">Noticias</a>
+        <a href="noticias.php">Noticias</a>
         <a href="directiva.html">Directiva</a>
         <a href="galeria.html">Galería</a>
         <button class="nav-contact-button" type="button" data-contact-open>Contacto</button>
@@ -88,14 +89,20 @@ function news_date(?string $value): string
             <p class="eyebrow">Noticias</p>
             <h1>Noticia no encontrada</h1>
             <p>Puede que la publicación ya no esté visible o que el enlace no sea correcto.</p>
-            <a class="button primary" href="index.html#noticias">Volver a noticias</a>
+            <a class="button primary" href="noticias.php">Volver a noticias</a>
           </div>
           <img src="assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interés Robótica Educativa">
         </section>
       <?php else: ?>
         <article class="news-detail">
           <?php if (!empty($news['image_path'])): ?>
-            <img class="news-detail-image" src="<?= h(local_image_src($news['image_path'])) ?>" alt="<?= h($news['title']) ?>">
+            <div class="news-image-viewer" data-news-image-viewer>
+              <img class="news-detail-image" src="<?= h(local_image_src($news['image_path'])) ?>" alt="<?= h($news['title']) ?>">
+              <div class="news-image-controls" role="group" aria-label="Visualización de la imagen">
+                <button type="button" data-image-mode="full" aria-pressed="true">Imagen completa</button>
+                <button type="button" data-image-mode="cover" aria-pressed="false">Llenar espacio</button>
+              </div>
+            </div>
           <?php endif; ?>
           <div class="news-detail-content">
             <p class="eyebrow">Noticia · <?= h(news_date($news['published_at'])) ?></p>
@@ -104,15 +111,19 @@ function news_date(?string $value): string
               <p class="news-detail-summary"><?= h($news['summary']) ?></p>
             <?php endif; ?>
             <div class="news-detail-body">
-              <?php foreach (preg_split('/\R{2,}/', trim($news['body'])) as $paragraph): ?>
-                <p><?= nl2br(h($paragraph)) ?></p>
-              <?php endforeach; ?>
+              <?php if (!empty($news['body_html'])): ?>
+                <?= clean_news_html($news['body_html']) ?>
+              <?php else: ?>
+                <?php foreach (preg_split('/\R{2,}/', trim($news['body'])) as $paragraph): ?>
+                  <p><?= nl2br(h($paragraph)) ?></p>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
             <div class="hero-actions">
               <?php if (!empty($news['link_url'])): ?>
                 <a class="button primary" href="<?= h($news['link_url']) ?>" target="_blank" rel="noopener noreferrer"><?= h($news['link_label'] ?: 'Ver enlace') ?></a>
               <?php endif; ?>
-              <a class="button secondary" href="index.html#noticias">Volver a noticias</a>
+              <a class="button secondary" href="noticias.php">Ver todas las noticias</a>
             </div>
           </div>
         </article>

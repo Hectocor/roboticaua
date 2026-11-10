@@ -7,4 +7,5 @@ define('DB_USER', 'robotica_ua');
 define('DB_PASS', 'CAMBIA_ESTA_CLAVE');
 
 define('ADMIN_PASSWORD_HASH', 'PEGA_AQUI_EL_HASH_DE_TU_CLAVE');
+define('ADMIN_USERNAME', 'admin');
 

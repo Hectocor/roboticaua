@@ -196,7 +196,11 @@ function renderNewsList(container, items) {
     return;
   }
 
-  items.forEach((item) => {
+  container.classList.add("gallery", "news-carousel");
+  renderGallerySlider(container, items, createNewsCard, "noticias");
+}
+
+function createNewsCard(item) {
     const article = document.createElement("article");
     const content = document.createElement("div");
     const meta = document.createElement("span");
@@ -223,8 +227,7 @@ function renderNewsList(container, items) {
 
     content.append(meta, title, summary, link);
     article.appendChild(content);
-    container.appendChild(article);
-  });
+    return article;
 }
 
 async function loadNewsList(container) {
@@ -592,7 +595,7 @@ function createGalleryItem(image, index) {
   return button;
 }
 
-function renderGallerySlider(gallery, images) {
+function renderGallerySlider(gallery, images, makeItem = createGalleryItem, kind = "imágenes") {
   let currentIndex = 0;
   let autoplayId = null;
   const viewport = document.createElement("div");
@@ -610,16 +613,16 @@ function renderGallerySlider(gallery, images) {
   nextButton.className = "slider-control";
   previousButton.type = "button";
   nextButton.type = "button";
-  previousButton.setAttribute("aria-label", "Ver imágenes anteriores");
-  nextButton.setAttribute("aria-label", "Ver imágenes siguientes");
+  previousButton.setAttribute("aria-label", `Ver ${kind} anteriores`);
+  nextButton.setAttribute("aria-label", `Ver ${kind} siguientes`);
   previousButton.innerHTML = '<span class="slider-bot is-left" aria-hidden="true"><span></span></span>';
   nextButton.innerHTML = '<span class="slider-bot is-right" aria-hidden="true"><span></span></span>';
   dots.className = "gallery-slider-dots";
   viewport.tabIndex = 0;
-  viewport.setAttribute("aria-label", "Carrusel de últimas imágenes");
+  viewport.setAttribute("aria-label", `Carrusel de últimas ${kind}`);
 
   images.forEach((image, index) => {
-    track.appendChild(createGalleryItem(image, index));
+    track.appendChild(makeItem(image, index));
   });
 
   function visibleCount() {
@@ -641,6 +644,8 @@ function renderGallerySlider(gallery, images) {
   function updateSlider() {
     currentIndex = ((currentIndex % pageCount()) + pageCount()) % pageCount();
     track.style.transform = `translate3d(calc(${currentIndex} * -1 * var(--slider-step)), 0, 0)`;
+    controls.style.display = pageCount() > 1 ? "flex" : "none";
+    dots.style.display = pageCount() > 1 ? "flex" : "none";
     dots.querySelectorAll("button").forEach((dot, index) => {
       dot.setAttribute("aria-current", String(index === currentIndex));
     });
@@ -652,7 +657,7 @@ function renderGallerySlider(gallery, images) {
     for (let index = 0; index < pageCount(); index += 1) {
       const dot = document.createElement("button");
       dot.type = "button";
-      dot.setAttribute("aria-label", `Ir al grupo de imágenes ${index + 1}`);
+      dot.setAttribute("aria-label", `Ir al grupo de ${kind} ${index + 1}`);
       dot.addEventListener("click", () => {
         currentIndex = index;
         updateSlider();
@@ -721,6 +726,8 @@ function renderGallerySlider(gallery, images) {
   window.addEventListener("resize", () => {
     renderDots();
     updateSlider();
+    stopAutoplay();
+    startAutoplay();
   });
 
   gallery.addEventListener("mouseenter", stopAutoplay);
@@ -968,6 +975,16 @@ contactForms.forEach((form) => {
 });
 
 applyAccessibilityState(getAccessibilityState());
+document.querySelectorAll("[data-news-image-viewer]").forEach((viewer) => {
+  viewer.querySelectorAll("[data-image-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      viewer.classList.toggle("is-cover", button.dataset.imageMode === "cover");
+      viewer.querySelectorAll("[data-image-mode]").forEach((control) => {
+        control.setAttribute("aria-pressed", String(control === button));
+      });
+    });
+  });
+});
 galleries.forEach(loadGallery);
 newsLists.forEach(loadNewsList);
 loadSiteAlert();

@@ -15,6 +15,7 @@ defined('DB_CHARSET') || define('DB_CHARSET', 'utf8mb4');
 
 defined('ADMIN_PASSWORD_HASH') || define('ADMIN_PASSWORD_HASH', getenv('ADMIN_PASSWORD_HASH') ?: '');
 defined('ADMIN_PASSWORD') || define('ADMIN_PASSWORD', getenv('ADMIN_PASSWORD') ?: '');
+defined('ADMIN_USERNAME') || define('ADMIN_USERNAME', getenv('ADMIN_USERNAME') ?: 'admin');
 
 defined('UPLOAD_DIR') || define('UPLOAD_DIR', __DIR__ . '/uploads/gallery');
 defined('UPLOAD_URL') || define('UPLOAD_URL', 'uploads/gallery');

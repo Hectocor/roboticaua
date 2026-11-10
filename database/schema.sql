@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS news_posts (
   title VARCHAR(180) NOT NULL,
   summary VARCHAR(320) NOT NULL DEFAULT '',
   body TEXT NOT NULL,
+  body_html MEDIUMTEXT NULL,
   image_path VARCHAR(500) NOT NULL DEFAULT '',
   link_url VARCHAR(500) NOT NULL DEFAULT '',
   link_label VARCHAR(80) NOT NULL DEFAULT '',
@@ -50,6 +51,19 @@ CREATE TABLE IF NOT EXISTS news_posts (
   CONSTRAINT chk_news_title_not_empty CHECK (CHAR_LENGTH(TRIM(title)) >= 2),
   CONSTRAINT chk_news_body_not_empty CHECK (CHAR_LENGTH(TRIM(body)) >= 12),
   CONSTRAINT chk_news_is_active CHECK (is_active IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(80) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_admin_username (username),
+  CONSTRAINT chk_admin_username_not_empty CHECK (CHAR_LENGTH(TRIM(username)) >= 3),
+  CONSTRAINT chk_admin_is_active CHECK (is_active IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO gallery_images (title, image_path, alt_text, sort_order, is_active, created_at, updated_at) VALUES

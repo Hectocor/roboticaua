@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../config.php';
+require __DIR__ . '/../news-content.php';
 
 header('X-Frame-Options: SAMEORIGIN');
 header('X-Content-Type-Options: nosniff');
@@ -23,7 +24,7 @@ session_set_cookie_params([
 ]);
 session_start();
 
-const ADMIN_ACTIONS = ['login', 'logout', 'create', 'update', 'delete', 'move', 'save_alert', 'delete_alert', 'create_news', 'update_news', 'delete_news'];
+const ADMIN_ACTIONS = ['login', 'logout', 'create', 'update', 'delete', 'move', 'save_alert', 'delete_alert', 'create_news', 'update_news', 'delete_news', 'upload_news_inline'];
 
 function redirect_admin(): never
 {
@@ -33,7 +34,30 @@ function redirect_admin(): never
 
 function is_logged_in(): bool
 {
-    return !empty($_SESSION['admin_logged_in']);
+    return !empty($_SESSION['admin_user_id']);
+}
+
+function authenticate_admin(string $username, string $password): ?array
+{
+    $username = trim($username);
+    if (!preg_match('/^[\p{L}\p{N}._-]{3,80}$/u', $username) || $password === '') {
+        return null;
+    }
+
+    try {
+        $count = (int) db()->query('SELECT COUNT(*) FROM admin_users')->fetchColumn();
+    } catch (PDOException $exception) {
+        throw new RuntimeException('No se pudo consultar el acceso. Revisa la conexión y ejecuta la migración SQL indicada en DEPLOYMENT.md.');
+    }
+    if ($count === 0 && hash_equals(ADMIN_USERNAME, $username) && admin_password_is_valid($password)) {
+        $statement = db()->prepare('INSERT INTO admin_users (username, password_hash) VALUES (:username, :password_hash)');
+        $statement->execute(['username' => $username, 'password_hash' => password_hash($password, PASSWORD_DEFAULT)]);
+    }
+
+    $statement = db()->prepare('SELECT id, username, password_hash FROM admin_users WHERE username = :username AND is_active = 1 LIMIT 1');
+    $statement->execute(['username' => $username]);
+    $user = $statement->fetch();
+    return $user && password_verify($password, $user['password_hash']) ? $user : null;
 }
 
 function csrf_token(): string
@@ -197,7 +221,7 @@ function current_site_alert(): ?array
 function news_items(): array
 {
     $statement = db()->query(
-        'SELECT id, title, summary, body, image_path, link_url, link_label, is_active, published_at
+        'SELECT id, title, summary, body, body_html, image_path, link_url, link_label, is_active, published_at
          FROM news_posts
          ORDER BY published_at DESC, id DESC'
     );
@@ -286,6 +310,15 @@ function normalize_uploaded_file(array $file, string $uploadDir = UPLOAD_DIR, st
     return rtrim($uploadUrl, '/') . '/' . $filename;
 }
 
+function news_html_input(): string
+{
+    $raw = (string) ($_POST['news_body_html'] ?? '');
+    if (strlen($raw) > 60000) {
+        throw new RuntimeException('El detalle de la noticia es demasiado extenso.');
+    }
+    return clean_news_html($raw);
+}
+
 $message = '';
 $error = '';
 
@@ -302,22 +335,34 @@ try {
                 throw new RuntimeException('Demasiados intentos. Espera unos minutos e intenta nuevamente.');
             }
 
-            if (admin_password_is_valid((string) ($_POST['password'] ?? ''))) {
+            $user = authenticate_admin((string) ($_POST['username'] ?? ''), (string) ($_POST['password'] ?? ''));
+            if ($user) {
                 session_regenerate_id(true);
-                $_SESSION['admin_logged_in'] = true;
+                $_SESSION['admin_user_id'] = (int) $user['id'];
+                $_SESSION['admin_username'] = $user['username'];
                 clear_failed_logins();
                 csrf_token();
                 redirect_admin();
             }
 
             register_failed_login();
-            $error = 'Clave incorrecta o no configurada.';
+            $error = 'Usuario o clave incorrectos.';
         } elseif ($action === 'logout') {
             verify_csrf();
             session_destroy();
             redirect_admin();
         } elseif (is_logged_in()) {
             verify_csrf();
+
+            if ($action === 'upload_news_inline') {
+                $path = normalize_uploaded_file($_FILES['news_inline_image'] ?? [], NEWS_UPLOAD_DIR, NEWS_UPLOAD_URL);
+                if ($path === '') {
+                    throw new RuntimeException('Selecciona una imagen para insertar.');
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['ok' => true, 'url' => '/' . $path], JSON_UNESCAPED_SLASHES);
+                exit;
+            }
 
             if ($action === 'create') {
                 $title = text_input('title', 2, 160);
@@ -346,6 +391,11 @@ try {
 
             if ($action === 'update') {
                 $id = positive_id();
+                $exists = db()->prepare('SELECT id FROM gallery_images WHERE id = :id LIMIT 1');
+                $exists->execute(['id' => $id]);
+                if (!$exists->fetchColumn()) {
+                    throw new RuntimeException('No se encontró el registro a actualizar.');
+                }
                 $title = text_input('title', 2, 160);
                 $imagePath = normalize_image_path(text_input('image_path', 1, 500));
                 $altText = optional_text_input('alt_text', 220);
@@ -361,10 +411,6 @@ try {
                     'alt_text' => $altText !== '' ? $altText : $title,
                     'is_active' => isset($_POST['is_active']) ? 1 : 0,
                 ]);
-
-                if ($statement->rowCount() === 0) {
-                    throw new RuntimeException('No se encontró el registro a actualizar.');
-                }
 
                 $message = 'Imagen actualizada.';
             }
@@ -489,6 +535,7 @@ try {
                 $title = text_input('news_title', 2, 180);
                 $summary = optional_text_input('news_summary', 320);
                 $body = text_input('news_body', 12, 5000);
+                $bodyHtml = news_html_input();
                 $imagePath = optional_text_input('news_image_path', 500);
                 $uploadedPath = normalize_uploaded_file($_FILES['news_image_file'] ?? [], NEWS_UPLOAD_DIR, NEWS_UPLOAD_URL);
                 $linkUrl = optional_url_input('news_link_url');
@@ -508,20 +555,21 @@ try {
                 }
 
                 $statement = db()->prepare(
-                    'INSERT INTO news_posts (title, summary, body, image_path, link_url, link_label, is_active, published_at)
-                     VALUES (:title, :summary, :body, :image_path, :link_url, :link_label, :is_active, :published_at)'
+                    'INSERT INTO news_posts (title, summary, body, body_html, image_path, link_url, link_label, is_active, published_at)
+                     VALUES (:title, :summary, :body, :body_html, :image_path, :link_url, :link_label, :is_active, :published_at)'
                 );
                 $statement->execute([
                     'title' => $title,
                     'summary' => $summary,
                     'body' => $body,
+                    'body_html' => $bodyHtml ?: null,
                     'image_path' => $imagePath,
                     'link_url' => $linkUrl,
                     'link_label' => $linkLabel,
                     'is_active' => isset($_POST['news_is_active']) ? 1 : 0,
                     'published_at' => $publishedAt,
                 ]);
-                $message = 'Noticia publicada.';
+                $message = isset($_POST['news_is_active']) ? 'Noticia publicada.' : 'Borrador guardado.';
             }
 
             if ($action === 'update_news') {
@@ -529,6 +577,7 @@ try {
                 $title = text_input('news_title', 2, 180);
                 $summary = optional_text_input('news_summary', 320);
                 $body = text_input('news_body', 12, 5000);
+                $bodyHtml = news_html_input();
                 $imagePath = optional_text_input('news_image_path', 500);
                 $uploadedPath = normalize_uploaded_file($_FILES['news_image_file'] ?? [], NEWS_UPLOAD_DIR, NEWS_UPLOAD_URL);
                 $linkUrl = optional_url_input('news_link_url');
@@ -549,7 +598,7 @@ try {
 
                 $statement = db()->prepare(
                     'UPDATE news_posts
-                     SET title = :title, summary = :summary, body = :body, image_path = :image_path,
+                     SET title = :title, summary = :summary, body = :body, body_html = :body_html, image_path = :image_path,
                          link_url = :link_url, link_label = :link_label, is_active = :is_active,
                          published_at = :published_at
                      WHERE id = :id'
@@ -559,16 +608,13 @@ try {
                     'title' => $title,
                     'summary' => $summary,
                     'body' => $body,
+                    'body_html' => $bodyHtml ?: null,
                     'image_path' => $imagePath,
                     'link_url' => $linkUrl,
                     'link_label' => $linkLabel,
                     'is_active' => isset($_POST['news_is_active']) ? 1 : 0,
                     'published_at' => $publishedAt,
                 ]);
-
-                if ($statement->rowCount() === 0) {
-                    throw new RuntimeException('No se encontró la noticia a actualizar.');
-                }
 
                 $message = 'Noticia actualizada.';
             }
@@ -590,6 +636,13 @@ try {
     $error = $exception->getMessage();
 }
 
+if (($_POST['ajax'] ?? '') === '1') {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code($error === '' && $message !== '' ? 200 : 400);
+    echo json_encode(['ok' => $error === '' && $message !== '', 'message' => $message ?: $error], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $items = is_logged_in() ? gallery_items() : [];
 $siteAlert = is_logged_in() ? current_site_alert() : null;
 $newsItems = is_logged_in() ? news_items() : [];
@@ -606,6 +659,7 @@ $token = csrf_token();
     <link rel="icon" type="image/png" href="../assets/favicon.png">
     <link rel="apple-touch-icon" href="../assets/favicon.png">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
   </head>
   <body>
     <header class="site-header admin-header">
@@ -620,7 +674,7 @@ $token = csrf_token();
       </a>
       <nav aria-label="Navegación principal">
         <a href="../index.html#proposito">Propósito</a>
-        <a href="../index.html#noticias">Noticias</a>
+        <a href="../noticias.php">Noticias</a>
         <a href="../directiva.html">Directiva</a>
         <a href="../galeria.html">Galería</a>
         <button class="nav-contact-button" type="button" data-contact-open>Contacto</button>
@@ -632,7 +686,7 @@ $token = csrf_token();
         <div>
           <p class="eyebrow">Gestión interna</p>
           <h1>Backoffice del sitio</h1>
-          <p>Administra las novedades y las imágenes visibles en la galería.</p>
+          <p>Administra las noticias y las imágenes del sitio.</p>
         </div>
         <img src="../assets/robotica-taller-01.jpeg" alt="Logo Grupo de Interés Robótica Educativa">
       </section>
@@ -652,6 +706,10 @@ $token = csrf_token();
               <h2>Entrar al panel</h2>
             </div>
             <input type="hidden" name="action" value="login">
+            <label>
+              Usuario
+              <input type="text" name="username" autocomplete="username" minlength="3" maxlength="80" required>
+            </label>
             <label>
               Clave
               <input type="password" name="password" autocomplete="current-password" required>
@@ -715,11 +773,13 @@ $token = csrf_token();
                 Bajada breve
                 <input type="text" name="news_summary" maxlength="320" placeholder="Una frase corta para la portada.">
               </label>
-              <label>
-                Detalle
+              <div class="news-editor-field">
+                <span>Detalle</span>
+                <div class="news-editor" data-news-editor></div>
                 <textarea name="news_body" rows="6" placeholder="Cuenta qué está pasando, fechas importantes, cómo participar y cualquier dato útil." required></textarea>
-              </label>
-              <button class="button primary" type="submit">Publicar noticia</button>
+                <input type="hidden" name="news_body_html" value="">
+              </div>
+              <button class="button primary" type="submit">Guardar noticia</button>
             </form>
 
             <div class="managed-news">
@@ -765,10 +825,12 @@ $token = csrf_token();
                       Bajada
                       <input type="text" name="news_summary" value="<?= h($news['summary']) ?>" maxlength="320">
                     </label>
-                    <label>
-                      Detalle
+                    <div class="news-editor-field">
+                      <span>Detalle</span>
+                      <div class="news-editor" data-news-editor><?= !empty($news['body_html']) ? clean_news_html($news['body_html']) : '<p>' . nl2br(h($news['body'])) . '</p>' ?></div>
                       <textarea name="news_body" rows="5" required><?= h($news['body']) ?></textarea>
-                    </label>
+                      <input type="hidden" name="news_body_html" value="">
+                    </div>
                     <div class="managed-actions">
                       <button type="submit" name="action" value="update_news">Guardar</button>
                       <button type="submit" name="action" value="delete_news">Eliminar</button>
@@ -818,7 +880,7 @@ $token = csrf_token();
               <?php foreach ($items as $index => $item): ?>
                 <article class="managed-item editable">
                   <img src="<?= h(admin_image_src($item['image_path'])) ?>" alt="<?= h($item['alt_text'] ?: $item['title']) ?>">
-                  <form method="post">
+                  <form method="post" data-gallery-edit-form>
                     <input type="hidden" name="csrf_token" value="<?= h($token) ?>">
                     <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                     <label>
@@ -843,6 +905,7 @@ $token = csrf_token();
                       <button type="submit" name="action" value="move" formaction="./" onclick="this.form.direction.value='down'" <?= $index === count($items) - 1 ? 'disabled' : '' ?>>Bajar</button>
                       <button type="submit" name="action" value="delete" formaction="./">Eliminar</button>
                     </div>
+                    <p class="admin-inline-status" role="status" aria-live="polite"></p>
                     <input type="hidden" name="direction" value="">
                   </form>
                 </article>
@@ -883,6 +946,8 @@ $token = csrf_token();
         </form>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="../admin/admin.js"></script>
     <script src="../script.js"></script>
   </body>
 </html>
